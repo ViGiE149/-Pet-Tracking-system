@@ -36,106 +36,82 @@ namespace PetTrackingApp
         private void SignUpBtn_Click(object sender, EventArgs e)
         {
 
-            string contact = txtContact.Text;
-            String id = txtID.Text;
-            Match regexID = Regex.Match(id, idPattern);
-            Match regexNum = Regex.Match(contact, phoneNumPattern);
-
-            if (!(txtID.Text == "" || txtName.Text == "" || txtSurname.Text == "" || txtAddress.Text == "" || txtContact.Text == "" || txtPassword.Text == "" || txtPasswordConfirm.Text == "" || radioButton1.Checked.Equals(false) && radioButton2.Checked.Equals(false)))
+            try
             {
-                if (regexID.Success)
+                if (new TextBox[] { txtID, txtName, txtSurname, txtAddress, txtContact, txtPassword, txtPasswordConfirm }
+                    .Any(textBox => string.IsNullOrWhiteSpace(textBox.Text) || (radioButton1.Checked == false && radioButton2.Checked == false)))
                 {
-                    if (regexNum.Success)
-                {
-                    try
-                    {
-
-                        if (txtPassword.Text == txtPasswordConfirm.Text)
-                        {
-
-                            try
-                            {
-                                OleDbConnection con = new OleDbConnection();
-                                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                                con.Open();
-
-                                OleDbCommand command = new OleDbCommand();
-                                command.Connection = con;
-
-
-
-                                command.CommandText = "SELECT * FROM owners WHERE id_number ='" + txtID.Text + "';";
-
-                                OleDbDataReader reader = command.ExecuteReader();
-
-
-
-                                if (reader.Read())
-                                {
-                                    // con.Close();
-                                    // con.Open();
-                                    check = true;
-
-                                }
-
-                                con.Close();
-                                con.Open();
-                                if (check == false)
-                                {
-
-                                    command.CommandText = " INSERT INTO `owners` (`ID_number`, `Name`, `Surname`, `Gender`, `Address`, `Contact_No`, `Password`) VALUES( '" + txtID.Text + "','" + txtName.Text + "','" + txtSurname.Text + "', '" + gender + "','" + txtAddress.Text + "','" + txtContact.Text + "','" + txtPassword.Text + "'); ";
-                                    command.ExecuteNonQuery();
-                                    con.Close();
-                                    MessageBox.Show("registed");
-                                    this.Hide();
-                                    new LogIn().Show();
-
-                                }
-                                else
-                                {
-                                    MessageBox.Show("this iD number is already reqistered");
-                                }
-                                con.Close();
-                            }
-                            catch (Exception EX)
-                            {
-                                MessageBox.Show("an error occoured" + EX);
-
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("passwords are not the same");
-                        }
-
-
-                    }
-                  
-                    catch (FormatException)
-                    {
-
-                        MessageBox.Show("number format error id and numbe");
-                    }
-                   
+                    MessageBox.Show("Fill in all places");
                 }
                 else
                 {
-                    MessageBox.Show("invalid phone number");
+                    string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+
+                    using (OleDbConnection con = new OleDbConnection(connectionString))
+                    {
+                        con.Open();
+
+                        using (OleDbCommand command = new OleDbCommand())
+                        {
+                            command.Connection = con;
+
+                            // Check if ID is already registered
+                            command.CommandText = "SELECT * FROM owners WHERE id_number = ?";
+                            command.Parameters.AddWithValue("?", txtID.Text);
+
+                            using (OleDbDataReader reader = command.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    MessageBox.Show("This ID number is already registered");
+                                }
+                                else
+                                {
+                                    // Insert new record
+                                    if (txtPassword.Text == txtPasswordConfirm.Text)
+                                    {
+                                        // Validate phone number
+                                        Match regexNum = Regex.Match(txtContact.Text, phoneNumPattern);
+
+                                        if (regexNum.Success)
+                                        {
+                                            // Insert data into the database
+                                            command.CommandText = "INSERT INTO owners (ID_number, Name, Surname, Gender, Address, Contact_No, Password) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                                            command.Parameters.AddWithValue("?", txtID.Text);
+                                            command.Parameters.AddWithValue("?", txtName.Text);
+                                            command.Parameters.AddWithValue("?", txtSurname.Text);
+                                            command.Parameters.AddWithValue("?", gender);
+                                            command.Parameters.AddWithValue("?", txtAddress.Text);
+                                            command.Parameters.AddWithValue("?", txtContact.Text);
+                                            command.Parameters.AddWithValue("?", txtPassword.Text);
+
+                                            command.ExecuteNonQuery();
+
+                                            MessageBox.Show("Registered");
+                                            this.Hide();
+                                            new LogIn().Show();
+                                        }
+                                        else
+                                        {
+                                            MessageBox.Show("Invalid phone number");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("Passwords are not the same");
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                  
             }
-            else
+            catch (Exception ex)
             {
-                    MessageBox.Show("invalid ID number");
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
 
-
-            }
-            else
-            {
-                MessageBox.Show("Fill in all places");
-            }    
-          }
+        }
 
         private void Login2_Click(object sender, EventArgs e)
         {

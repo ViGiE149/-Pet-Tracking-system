@@ -69,104 +69,131 @@ namespace PetTrackingApp
 
         private void petTransfareBtn_Click(object sender, EventArgs e)
         {
-          
-
-            OleDbConnection con = new OleDbConnection();
-            con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-            con.Open();
-
-            OleDbCommand command = new OleDbCommand();
-            command.Connection = con;
-
-            if (txtNewOwner.Text == "" || txtPetID.Text == "")
+            try
             {
-                MessageBox.Show("error make sure new owner id and pat id are filled!");
-            }
-            else
-            {
-
-
-
-
-
-                command.CommandText = "SELECT Pet_ID FROM Pets WHERE Pet_ID = '" + txtPetID.Text + "';";
-
-                OleDbDataReader reader = command.ExecuteReader();
-
-
-
-                while (reader.Read())
+                using (OleDbConnection con = new OleDbConnection())
                 {
+                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    con.Open();
 
-                   idValid = true;
-                }
-
-                con.Close();
-                con.Open();
-
-
-                command.CommandText = "SELECT Pet_ID FROM Pets WHERE Pet_ID = '" + txtPetID.Text + "';";
-
-                 reader = command.ExecuteReader();
-
-                
-
-                if (reader.Read())
-                {
-
-                    petValid = true;
-                }
-
-                con.Close();
-                con.Open();
-
-
-                if (idValid==true)
-                {
-                    if (petValid==true)
+                    using (OleDbCommand command = new OleDbCommand())
                     {
+                        command.Connection = con;
 
-                        command.CommandText = "SELECT * FROM Pet_Transfer WHERE current_ownerID = '" + txtPrevious.Text + "'   AND   new_ownerID ='" + txtNewOwner.Text + "' AND pet_ID = '" + txtPetID.Text + "';";
-
-
-                        reader = command.ExecuteReader();
-
-
-                        if (reader.Read())
+                        if (string.IsNullOrEmpty(txtNewOwner.Text) || string.IsNullOrEmpty(txtPetID.Text))
                         {
-                            MessageBox.Show("this pet has already been tranferred to this ID");
-                            check = false;
-
+                            MessageBox.Show("Error: Make sure new owner ID and pet ID are filled!");
                         }
                         else
                         {
-                            check = true;
-                        }
+                            // Check if pet ID exists
+                            command.CommandText = "SELECT Pet_ID FROM Pets WHERE Pet_ID = ?";
+                            command.Parameters.AddWithValue("?", txtPetID.Text);
 
-                        con.Close();
+                            using (OleDbDataReader reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    idValid = true;
+                                }
+                            }
 
-                        if (check == true)
-                        {
+                            con.Close();
                             con.Open();
-                            command.CommandText = "INSERT INTO `Pet_Transfer` ( `pet_ID`,`current_ownerID`, `new_ownerID`, `reason`, `date`) VALUES ('" + txtPetID.Text + "','" + txtPrevious.Text + "','" + txtNewOwner.Text + "','" + txtReason.Text + "','" + txtPetDOB.Value.ToString() + "')";
-                            command.ExecuteNonQuery();
 
+                            // Check if pet ID is valid
+                            command.CommandText = "SELECT Pet_ID FROM Pets WHERE Pet_ID = ?";
+                            command.Parameters.Clear();
+                            command.Parameters.AddWithValue("?", txtPetID.Text);
 
+                            using (OleDbDataReader reader = command.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    petValid = true;
+                                }
+                            }
 
-                            command.CommandText = "UPDATE Pets SET Owner_ID  = '" + txtNewOwner.Text + "'   WHERE Pet_ID = '" + txtPetID.Text + "'; ";
-                            command.ExecuteNonQuery();
+                            con.Close();
+                            con.Open();
 
-                            MessageBox.Show("pet " + txtPetID.Text + " successfully transfered from "+ txtPrevious.Text+" to " + txtNewOwner.Text);
+                            if (idValid)
+                            {
+                                if (petValid)
+                                {
+                                    // Check if the pet has already been transferred to the new owner
+                                    command.CommandText = "SELECT * FROM Pet_Transfer WHERE current_ownerID = ? AND new_ownerID = ? AND pet_ID = ?";
+                                    command.Parameters.Clear();
+                                    command.Parameters.AddWithValue("?", txtPrevious.Text);
+                                    command.Parameters.AddWithValue("?", txtNewOwner.Text);
+                                    command.Parameters.AddWithValue("?", txtPetID.Text);
+
+                                    using (OleDbDataReader reader = command.ExecuteReader())
+                                    {
+                                        if (reader.Read())
+                                        {
+                                            MessageBox.Show("This pet has already been transferred to this ID");
+                                            check = false;
+                                        }
+                                        else
+                                        {
+                                            check = true;
+                                        }
+                                    }
+
+                                    con.Close();
+
+                                    if (check)
+                                    {
+                                        con.Open();
+
+                                        // Insert into Pet_Transfer
+                                        command.CommandText = "INSERT INTO Pet_Transfer (pet_ID, current_ownerID, new_ownerID, reason, date) VALUES (?, ?, ?, ?, ?)";
+                                        command.Parameters.Clear();
+                                        command.Parameters.AddWithValue("?", txtPetID.Text);
+                                        command.Parameters.AddWithValue("?", txtPrevious.Text);
+                                        command.Parameters.AddWithValue("?", txtNewOwner.Text);
+                                        command.Parameters.AddWithValue("?", txtReason.Text);
+                                        command.Parameters.AddWithValue("?", txtPetDOB.Value.ToString());
+
+                                        command.ExecuteNonQuery();
+
+                                        // Update Pets table
+                                        command.CommandText = "UPDATE Pets SET Owner_ID = ? WHERE Pet_ID = ?";
+                                        command.Parameters.Clear();
+                                        command.Parameters.AddWithValue("?", txtNewOwner.Text);
+                                        command.Parameters.AddWithValue("?", txtPetID.Text);
+
+                                        command.ExecuteNonQuery();
+
+                                        MessageBox.Show($"Pet {txtPetID.Text} successfully transferred from {txtPrevious.Text} to {txtNewOwner.Text}");
+                                    }
+
+                                    con.Close();
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Pet ID is invalid!");
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("You cannot transfer to an ID that is not registered on the system!");
+                            }
                         }
-                        con.Close();
                     }
-                    else
-                    { MessageBox.Show("pet  ID invalid!!!"); } }
-                else { MessageBox.Show("you cannot trenfer to an ID that is not registered on the system!!!"); }
-
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message);
+            }
+
         }
 
-        
+        private void txtReason_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

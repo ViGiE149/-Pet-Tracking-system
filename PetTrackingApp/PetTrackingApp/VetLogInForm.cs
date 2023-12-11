@@ -23,64 +23,67 @@ namespace PetTrackingApp
         private void LoginBtn_Click(object sender, EventArgs e)
         {
 
-
-
-            if(!(txtID.Text.Equals("")  && txtPssword.Text.Equals("")))
+            if (!(string.IsNullOrEmpty(txtID.Text) || string.IsNullOrEmpty(txtPssword.Text)))
             {
-
-
                 try
                 {
-                    OleDbConnection con = new OleDbConnection();
-                    con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                    con.Open();
-
-                    OleDbCommand command = new OleDbCommand();
-                    command.Connection = con;
-
-                    command.CommandText = "SELECT Work_ID , Password FROM vetRegTable WHERE work_Id = '" + txtID.Text + "' AND password ='" + txtPssword.Text + "';";
-
-
-                    OleDbDataReader reader = command.ExecuteReader();
-
-                    if (reader.Read())
+                    using (OleDbConnection con = new OleDbConnection())
                     {
+                        con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                        con.Open();
 
-                        check = true;
+                        using (OleDbCommand command = new OleDbCommand())
+                        {
+                            command.Connection = con;
 
+                            // Use parameterized query to check credentials
+                            command.CommandText = "SELECT Work_ID, Password FROM vetRegTable WHERE Work_ID = ? AND Password = ?";
+                            command.Parameters.AddWithValue("?", txtID.Text);
+                            command.Parameters.AddWithValue("?", txtPssword.Text);
+
+                            using (OleDbDataReader reader = command.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    check = true;
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Invalid credentials!");
+                                }
+                            }
+
+                            con.Close();
+                            con.Open();
+
+                            if (check)
+                            {
+                                // Update Logged_In table
+                                command.CommandText = "UPDATE Logged_In SET ID_Number = ? WHERE count = 1";
+                                command.Parameters.Clear();
+                                command.Parameters.AddWithValue("?", txtID.Text);
+                                command.ExecuteNonQuery();
+
+                                this.Hide();
+                                vet page = new vet();
+                                page.Show();
+                            }
+
+                            con.Close();
+                        }
                     }
-                    else
-                    {
-                        MessageBox.Show("invalid craditials!");
-                    }
-                    con.Close();
-                    con.Open();
-                    if (check)
-                    {
-
-                        command.CommandText = "UPDATE Logged_In SET ID_Number ='" + txtID.Text + "' where count='1';";
-                        command.ExecuteNonQuery();
-
-                        this.Hide();
-                        vet page = new vet();
-                        page.Show();
-
-                    }
-                    con.Close();
                 }
-                catch (Exception EX)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("an error occoured" + EX);
-
+                    MessageBox.Show("An error occurred: " + ex.Message);
                 }
-
             }
             else
             {
-                MessageBox.Show("fill in all the the spaces!");
+                MessageBox.Show("Fill in all the spaces!");
             }
-               
-            
+
+
         }
 
         private void exit_Click(object sender, EventArgs e)

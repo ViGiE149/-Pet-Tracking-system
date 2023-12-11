@@ -156,52 +156,54 @@ namespace PetTrackingApp
         }
 
         private void timer1_Tick(object sender, EventArgs e)
-        {     
+        {
             try
             {
-
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-                command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                using (OleDbConnection con = new OleDbConnection())
                 {
+                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    con.Open();
 
-                    owner = reader["ID_Number"].ToString();
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
+                        // Get owner ID from Logged_In table
+                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                owner = reader["ID_Number"].ToString();
+                            }
+                        }
+
+                        con.Close();
+                        con.Open();
+
+                        // Get owner's name from owners table
+                        command.CommandText = "SELECT Name FROM owners WHERE ID_number = ?";
+                        command.Parameters.AddWithValue("?", owner);
+
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                name = reader["Name"].ToString();
+                            }
+                        }
+
+                        txtUsername.Text = name;
+                        txtId.Text = owner;
+                    }
                 }
 
-                con.Close();
-                con.Open();
-
-                command.CommandText = "SELECT * FROM owners where ID_number = '" + owner+"';";
-                reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-
-                    name = reader["Name"].ToString();
-                   
-                }
-                txtUsername.Text = name;
-                txtId.Text = owner;
-                con.Close();
-
-
+                timer1.Stop();
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
-            timer1.Stop();
 
         }
 

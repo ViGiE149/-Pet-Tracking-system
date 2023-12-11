@@ -26,49 +26,47 @@ namespace PetTrackingApp
 
             try
             {
-
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-                command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                using (OleDbConnection con = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;"))
                 {
+                    con.Open();
 
-                    owner = reader["ID_Number"].ToString();
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
+                        // Get ID_Number from Logged_In table
+                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                owner = reader["ID_Number"].ToString();
+                            }
+                        }
+
+                        con.Close();
+                        con.Open();
+
+                        // Select pet data from PetS table for the current owner
+                        command.CommandText = "SELECT pet_ID, name, status, statusByVet FROM PetS WHERE Owner_ID = '" + owner + "';";
+                        command.ExecuteNonQuery();
+
+                        using (OleDbDataAdapter adapter = new OleDbDataAdapter(command))
+                        {
+                            DataTable table = new DataTable();
+                            adapter.Fill(table);
+
+                            dataGridView1.DataSource = table;
+                        }
+
+                        con.Close();
+                    }
                 }
-
-                con.Close();
-                con.Open();
-
-                command.CommandText = "select pet_ID, name,status,statusByVet FROM PetS where Owner_ID ='" + owner + "';";
-                command.ExecuteNonQuery();
-
-                OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                DataTable table = new DataTable();
-                adapter.Fill(table);
-
-                dataGridView1.DataSource = table;
-
-                con.Close();
-
-
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
-
-
 
 
         }
@@ -107,38 +105,38 @@ namespace PetTrackingApp
 
             try
             {
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-                if (!(texBoxStatus.Text == "" || txtName.Text== "'''''''''''''''''''"))
+                using (OleDbConnection con = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;"))
                 {
+                    con.Open();
 
-                    command.CommandText = "UPDATE Pets SET status ='" + texBoxStatus.Text + "' WHERE Pet_ID = '" + txtName.Text + "'; ";
-                    command.ExecuteNonQuery();
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
-                    con.Close();
+                        if (!string.IsNullOrWhiteSpace(texBoxStatus.Text) && !string.IsNullOrWhiteSpace(txtName.Text))
+                        {
+                            command.CommandText = "UPDATE Pets SET status = '" + texBoxStatus.Text + "' WHERE Pet_ID = '" + txtName.Text + "'; ";
+                            command.ExecuteNonQuery();
 
-                    MessageBox.Show("Updated successfully");
+                            MessageBox.Show("Updated successfully");
+                        }
+                        else
+                        {
+                            MessageBox.Show("Error! Click and update the status of a registered pet.");
+                        }
+                    }
                 }
-                else
-                {
-                    MessageBox.Show("error! click and update status of a registered pet");
-                }
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
 
-        
         }
 
-      
-      
+        private void StatusPanel_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

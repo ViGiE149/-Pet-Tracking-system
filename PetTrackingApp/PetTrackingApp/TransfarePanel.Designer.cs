@@ -69,6 +69,7 @@
             this.txtReason.Name = "txtReason";
             this.txtReason.Size = new System.Drawing.Size(355, 53);
             this.txtReason.TabIndex = 4;
+            this.txtReason.TextChanged += new System.EventHandler(this.txtReason_TextChanged);
             // 
             // txtNewOwner
             // 

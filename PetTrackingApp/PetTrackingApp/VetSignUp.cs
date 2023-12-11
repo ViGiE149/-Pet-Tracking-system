@@ -52,90 +52,89 @@ namespace PetTrackingApp
             string phoneNumPattern = @"^((?:\+27|27)|0)(\d{2})-?(\d{3})-?(\d{4})$";
             Match regexNum = Regex.Match(contact, phoneNumPattern);
 
-
-            if (txtName.Text == "" || txtSurname.Text == "" || txtID.Text == "" || txtAddress.Text == "" || contact == "" || txtPassword.Text == "" || txtPasswordConfirm.Text =="" || radioButton1.Checked.Equals(false) && radioButton2.Checked.Equals(false))
+            if (string.IsNullOrWhiteSpace(txtName.Text) || string.IsNullOrWhiteSpace(txtSurname.Text) || string.IsNullOrWhiteSpace(txtID.Text) || string.IsNullOrWhiteSpace(txtAddress.Text) || string.IsNullOrWhiteSpace(contact) || string.IsNullOrWhiteSpace(txtPassword.Text) || string.IsNullOrWhiteSpace(txtPasswordConfirm.Text) || (!radioButton1.Checked && !radioButton2.Checked))
             {
                 MessageBox.Show("Fill in all details");
             }
             else
             {
-
-
                 if (regexNum.Success)
                 {
                     if (txtPassword.Text.Equals(txtPasswordConfirm.Text))
                     {
-
                         try
                         {
                             int m = Convert.ToInt32(txtContact.Text);
-                            OleDbConnection con = new OleDbConnection();
-                            con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                            con.Open();
 
-                            OleDbCommand command = new OleDbCommand();
-                            command.Connection = con;
-
-
-
-                            command.CommandText = "SELECT * FROM owners WHERE id_number ='" + txtID.Text + "';";
-
-                            OleDbDataReader reader = command.ExecuteReader();
-
-
-
-                            if (reader.Read())
+                            using (OleDbConnection con = new OleDbConnection())
                             {
-                                // con.Close();
-                                // con.Open();
-                                check = true;
+                                con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                                con.Open();
 
+                                using (OleDbCommand command = new OleDbCommand())
+                                {
+                                    command.Connection = con;
+
+                                    // Check if ID number is already registered
+                                    command.CommandText = "SELECT * FROM vetRegTable WHERE Work_ID = ?";
+                                    command.Parameters.AddWithValue("?", txtID.Text);
+
+                                    using (OleDbDataReader reader = command.ExecuteReader())
+                                    {
+                                        if (reader.Read())
+                                        {
+                                            check = true;
+                                        }
+                                    }
+
+                                    con.Close();
+                                    con.Open();
+
+                                    if (!check)
+                                    {
+                                        // Insert new vet record
+                                        command.CommandText = "INSERT INTO vetRegTable (Work_ID, name_, Surname, Address, Contact_No, Gender, Password) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                                        command.Parameters.Clear();
+                                        command.Parameters.AddWithValue("?", txtID.Text);
+                                        command.Parameters.AddWithValue("?", txtName.Text);
+                                        command.Parameters.AddWithValue("?", txtSurname.Text);
+                                        command.Parameters.AddWithValue("?", txtAddress.Text);
+                                        command.Parameters.AddWithValue("?", gender);
+                                        command.Parameters.AddWithValue("?", txtContact.Text);
+                                        command.Parameters.AddWithValue("?", txtPassword.Text);
+
+                                        command.ExecuteNonQuery();
+
+                                        MessageBox.Show("Registered successfully");
+                                        this.Hide();
+                                        new VetLogInForm().Show();
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("This ID number is already registered");
+                                    }
+                                }
                             }
-
-                            con.Close();
-                            con.Open();
-                            if (check == false)
-                            {
-
-                                command.CommandText = " INSERT INTO `vetRegTable` (Work_ID, `name_`, `Surname`, `Address`, `Contact_No`,`Gender`, `Password`) VALUES ( '" + txtID.Text + "','" + txtName.Text + "','" + txtSurname.Text + "', '" + txtAddress.Text + "','" + gender + "','" + txtContact.Text + "','" + txtPassword.Text + "'); ";
-                                command.ExecuteNonQuery();
-                                con.Close();
-                                MessageBox.Show("registed");
-                                this.Hide();
-                                new VetLogInForm().Show();
-
-                            }
-                            else
-                            {
-                                MessageBox.Show("this iD number is already reqistered");
-                            }
-                            con.Close();
                         }
                         catch (FormatException)
                         {
-                            MessageBox.Show("number must be digits only");
-
+                            MessageBox.Show("Contact number must be digits only");
                         }
                     }
                     else
                     {
-
-                        MessageBox.Show("passwords are not equal");
-
-
+                        MessageBox.Show("Passwords do not match");
                     }
-
-                }////////
+                }
                 else
                 {
-
-                    MessageBox.Show("number must be 10 digits  and start with a 0");
-
-
+                    MessageBox.Show("Contact number must be 10 digits and start with a 0");
                 }
             }
-            
-                                                 }
+
+        
+
+    }
        
 
         private void txtContact_TextChanged(object sender, EventArgs e)

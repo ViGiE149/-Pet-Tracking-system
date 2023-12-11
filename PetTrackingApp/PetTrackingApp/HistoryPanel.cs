@@ -18,50 +18,48 @@ namespace PetTrackingApp
         {
             InitializeComponent();
 
-
-               
             try
             {
-
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-                command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                using (OleDbConnection con = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;"))
                 {
+                    con.Open();
 
-                    owner = reader["ID_Number"].ToString();
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
+                        // Get ID_Number from Logged_In table
+                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                owner = reader["ID_Number"].ToString();
+                            }
+                        }
+
+                        con.Close();
+                        con.Open();
+
+                        // Select data from Pet_Transfer table for the current owner
+                        command.CommandText = "SELECT * FROM Pet_Transfer WHERE current_ownerID = '" + owner + "';";
+                        command.ExecuteNonQuery();
+
+                        using (OleDbDataAdapter adapter = new OleDbDataAdapter(command))
+                        {
+                            DataTable table = new DataTable();
+                            adapter.Fill(table);
+
+                            dataGridView1.DataSource = table;
+                        }
+
+                        con.Close();
+                    }
                 }
-
-                con.Close();
-                con.Open();
-
-                command.CommandText = "select * FROM Pet_Transfer where current_ownerID ='" + owner +"';";
-                command.ExecuteNonQuery();
-
-                OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                DataTable table = new DataTable();
-                adapter.Fill(table);
-
-                dataGridView1.DataSource = table;
-
-                con.Close();
-
-          
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
 
         }

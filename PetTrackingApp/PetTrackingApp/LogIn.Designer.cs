@@ -40,11 +40,11 @@
             this.label3 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.hidePass = new System.Windows.Forms.Panel();
-            this.passShow = new System.Windows.Forms.PictureBox();
             this.exit = new System.Windows.Forms.Label();
             this.LoginBtn = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
             this.passHide = new System.Windows.Forms.PictureBox();
+            this.passShow = new System.Windows.Forms.PictureBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.panel3 = new System.Windows.Forms.Panel();
@@ -54,9 +54,9 @@
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.hidePass.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.passShow)).BeginInit();
             this.panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.passHide)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.passShow)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -195,19 +195,7 @@
             this.hidePass.Name = "hidePass";
             this.hidePass.Size = new System.Drawing.Size(512, 450);
             this.hidePass.TabIndex = 2;
-            // 
-            // passShow
-            // 
-            this.passShow.BackColor = System.Drawing.Color.White;
-            this.passShow.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.passShow.Image = global::PetTrackingApp.Properties.Resources.show;
-            this.passShow.Location = new System.Drawing.Point(395, 13);
-            this.passShow.Name = "passShow";
-            this.passShow.Size = new System.Drawing.Size(30, 20);
-            this.passShow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.passShow.TabIndex = 16;
-            this.passShow.TabStop = false;
-            this.passShow.Click += new System.EventHandler(this.pictureBox5_Click);
+            this.hidePass.Paint += new System.Windows.Forms.PaintEventHandler(this.hidePass_Paint);
             // 
             // exit
             // 
@@ -260,6 +248,19 @@
             this.passHide.TabIndex = 15;
             this.passHide.TabStop = false;
             this.passHide.Click += new System.EventHandler(this.pictureBox4_Click);
+            // 
+            // passShow
+            // 
+            this.passShow.BackColor = System.Drawing.Color.White;
+            this.passShow.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.passShow.Image = global::PetTrackingApp.Properties.Resources.show;
+            this.passShow.Location = new System.Drawing.Point(395, 13);
+            this.passShow.Name = "passShow";
+            this.passShow.Size = new System.Drawing.Size(30, 20);
+            this.passShow.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.passShow.TabIndex = 16;
+            this.passShow.TabStop = false;
+            this.passShow.Click += new System.EventHandler(this.pictureBox5_Click);
             // 
             // txtPassword
             // 
@@ -341,10 +342,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.hidePass.ResumeLayout(false);
             this.hidePass.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.passShow)).EndInit();
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.passHide)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.passShow)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();

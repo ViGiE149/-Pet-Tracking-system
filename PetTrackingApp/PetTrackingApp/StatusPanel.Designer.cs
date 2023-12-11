@@ -106,7 +106,6 @@
             this.texBoxStatus.Name = "texBoxStatus";
             this.texBoxStatus.Size = new System.Drawing.Size(231, 24);
             this.texBoxStatus.TabIndex = 6;
-         
             // 
             // txtName
             // 
@@ -198,7 +197,7 @@
             this.Name = "StatusPanel";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "StatusPanel";
-          
+            this.Load += new System.EventHandler(this.StatusPanel_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

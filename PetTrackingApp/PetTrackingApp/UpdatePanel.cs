@@ -18,52 +18,50 @@ namespace PetTrackingApp
         {
             InitializeComponent();
 
-            
             try
             {
-
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-                command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                using (OleDbConnection con = new OleDbConnection())
                 {
+                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    con.Open();
 
-                    owner = reader["ID_Number"].ToString();
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
+                        // Get owner ID from Logged_In table
+                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                owner = reader["ID_Number"].ToString();
+                            }
+                        }
+
+                        con.Close();
+                        con.Open();
+
+                        // Retrieve pets for the specific owner using parameterized query
+                        command.CommandText = "SELECT * FROM Pets WHERE Owner_ID = ?";
+                        command.Parameters.AddWithValue("?", owner);
+
+                        command.ExecuteNonQuery();
+
+                        OleDbDataAdapter adapter = new OleDbDataAdapter(command);
+                        DataTable table = new DataTable();
+                        adapter.Fill(table);
+
+                        dataGridView1.DataSource = table;
+
+                        con.Close();
+                    }
                 }
-
-                con.Close();
-                con.Open();
-
-                command.CommandText = "select * FROM PetS where Owner_ID ='"+owner +"';";
-                command.ExecuteNonQuery();
-
-                OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                DataTable table = new DataTable();
-                adapter.Fill(table);
-
-                dataGridView1.DataSource = table;
-
-                con.Close();
-
-          
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
-
-
 
         }
 
@@ -80,26 +78,32 @@ namespace PetTrackingApp
         {
             try
             {
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
+                using (OleDbConnection con = new OleDbConnection())
+                {
+                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    con.Open();
 
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
+                    using (OleDbCommand command = new OleDbCommand())
+                    {
+                        command.Connection = con;
 
+                        // Use parameterized query to update Pets table
+                        command.CommandText = "UPDATE Pets SET Name = ?, Colour = ? WHERE Pet_ID = ?";
+                        command.Parameters.AddWithValue("?", txtPetName.Text);
+                        command.Parameters.AddWithValue("?", txtPetColor.Text);
+                        command.Parameters.AddWithValue("?", txtPetID.Text);
 
+                        command.ExecuteNonQuery();
 
-                command.CommandText = "UPDATE Pets SET name ='" + txtPetName.Text + "', Colour = '" + txtPetColor.Text + "'   WHERE Pet_ID = '" + txtPetID.Text + "'; ";
-                command.ExecuteNonQuery();
-               
-                con.Close();
+                        con.Close();
 
-                MessageBox.Show("Updated successfully");
-
+                        MessageBox.Show("Updated successfully");
+                    }
+                }
             }
-            catch(Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
 
 

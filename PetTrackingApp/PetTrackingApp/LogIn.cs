@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Data.OleDb;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PetTrackingApp
@@ -19,55 +12,36 @@ namespace PetTrackingApp
             InitializeComponent();
         }
 
-      
+
 
         private void LoginBtn_Click(object sender, EventArgs e)
         {
 
-
             try
             {
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
+                int count = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE id_number = ? AND password = ?",
+                                                   new OleDbParameter("?", txtID.Text),
+                                                   new OleDbParameter("?", txtPassword.Text));
 
-                command.CommandText = "SELECT * FROM owners WHERE id_number ='" + txtID.Text + "' AND password ='" + txtPassword.Text + "';";
-
-
-                OleDbDataReader reader = command.ExecuteReader();
-               
-               if (reader.Read())
+                if (count > 0)
                 {
-                   
-                    check = true;
-              
-                }
-               else
-                {
-                    MessageBox.Show("invalid craditials!");
-                }
-                con.Close();
-                con.Open();
-                if (check)
-                {
-                   
-                    command.CommandText = "UPDATE Logged_In SET ID_Number ='" + txtID.Text + "' where count='1';"; 
-                    command.ExecuteNonQuery();
+                    // Update Logged_In table
+                    dbHelper.ExecuteNonQuery("UPDATE Logged_In SET ID_Number = ? WHERE count = 1", new OleDbParameter("?", txtID.Text));
 
                     this.Hide();
-                    OwnerDesk page = new OwnerDesk();
-                    page.Show();
-
+                    new OwnerDesk().Show();
                 }
-                con.Close();
+                else
+                {
+                    MessageBox.Show("Invalid credentials!");
+                }
             }
-            catch(Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("an error occoured" +EX);
-
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
 
 
@@ -81,7 +55,7 @@ namespace PetTrackingApp
             page.Show();
         }
 
-       
+
 
         private void exit_Click(object sender, EventArgs e)
         {
@@ -89,18 +63,23 @@ namespace PetTrackingApp
         }
 
         private void pictureBox4_Click(object sender, EventArgs e)
-        {   
-                passShow.BringToFront();
-                txtPassword.UseSystemPasswordChar = false;
-            
+        {
+            passShow.BringToFront();
+            txtPassword.UseSystemPasswordChar = false;
+
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
         {
-           
-                passHide.BringToFront();
-                txtPassword.UseSystemPasswordChar = true;
-            
+
+            passHide.BringToFront();
+            txtPassword.UseSystemPasswordChar = true;
+
+        }
+
+        private void hidePass_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
