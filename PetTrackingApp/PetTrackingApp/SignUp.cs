@@ -9,6 +9,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Security.Cryptography;
+
 
 
 
@@ -19,7 +21,7 @@ namespace PetTrackingApp
     {
       
         String gender = "";
-        bool check = false;
+ 
         string phoneNumPattern = @"^((?:\+27|27)|0)(\d{2})-?(\d{3})-?(\d{4})$";
         string  idPattern = @"(?<Year>[0-9][0-9])(?<Month>([0][1-9])|([1][0-2]))(?<Day>([0-2][0-9])|([3][0-1]))(?<Gender>[0-9])(?<Series>[0-9]{3})(?<Citizenship>[0-9])(?<Uniform>[0-9])(?<Control>[0-9])";
 
@@ -46,62 +48,44 @@ namespace PetTrackingApp
                 else
                 {
                     string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                    using (OleDbConnection con = new OleDbConnection(connectionString))
+                    // Check if ID is already registered
+                    int count = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE ID_number = @ID_number",
+                                                       new OleDbParameter("@ID_number", txtID.Text));
+
+                    if (count > 0)
                     {
-                        con.Open();
+                        MessageBox.Show("This ID number is already registered");
+                    }
+                    else
+                    {
+                        // Hash the password
+                        string hashedPassword = shared.HashPassword(txtPassword.Text);
 
-                        using (OleDbCommand command = new OleDbCommand())
+                        // Validate phone number
+                        Match regexNum = Regex.Match(txtContact.Text, phoneNumPattern);
+
+                        if (regexNum.Success)
                         {
-                            command.Connection = con;
+                            // Insert data into the database using DatabaseHelper
+                            dbHelper.ExecuteNonQuery("INSERT INTO owners (ID_number, Name, Surname, Gender, Address, Contact_No, Password) " +
+                                                      "VALUES (@ID_number, @Name, @Surname, @Gender, @Address, @Contact_No, @Password)",
+                                                      new OleDbParameter("@ID_number", txtID.Text),
+                                                      new OleDbParameter("@Name", txtName.Text),
+                                                      new OleDbParameter("@Surname", txtSurname.Text),
+                                                      new OleDbParameter("@Gender", gender),
+                                                      new OleDbParameter("@Address", txtAddress.Text),
+                                                      new OleDbParameter("@Contact_No", txtContact.Text),
+                                                      new OleDbParameter("@Password", hashedPassword));
 
-                            // Check if ID is already registered
-                            command.CommandText = "SELECT * FROM owners WHERE id_number = ?";
-                            command.Parameters.AddWithValue("?", txtID.Text);
-
-                            using (OleDbDataReader reader = command.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    MessageBox.Show("This ID number is already registered");
-                                }
-                                else
-                                {
-                                    // Insert new record
-                                    if (txtPassword.Text == txtPasswordConfirm.Text)
-                                    {
-                                        // Validate phone number
-                                        Match regexNum = Regex.Match(txtContact.Text, phoneNumPattern);
-
-                                        if (regexNum.Success)
-                                        {
-                                            // Insert data into the database
-                                            command.CommandText = "INSERT INTO owners (ID_number, Name, Surname, Gender, Address, Contact_No, Password) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                                            command.Parameters.AddWithValue("?", txtID.Text);
-                                            command.Parameters.AddWithValue("?", txtName.Text);
-                                            command.Parameters.AddWithValue("?", txtSurname.Text);
-                                            command.Parameters.AddWithValue("?", gender);
-                                            command.Parameters.AddWithValue("?", txtAddress.Text);
-                                            command.Parameters.AddWithValue("?", txtContact.Text);
-                                            command.Parameters.AddWithValue("?", txtPassword.Text);
-
-                                            command.ExecuteNonQuery();
-
-                                            MessageBox.Show("Registered");
-                                            this.Hide();
-                                            new LogIn().Show();
-                                        }
-                                        else
-                                        {
-                                            MessageBox.Show("Invalid phone number");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Passwords are not the same");
-                                    }
-                                }
-                            }
+                            MessageBox.Show("Registered");
+                            this.Hide();
+                            new LogIn().Show();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Invalid phone number");
                         }
                     }
                 }
@@ -111,8 +95,12 @@ namespace PetTrackingApp
                 MessageBox.Show("An error occurred: " + ex.Message);
             }
 
+            // Function to hash the password using SHA-256
+          
+
         }
 
+      
         private void Login2_Click(object sender, EventArgs e)
         {
             this.Hide();

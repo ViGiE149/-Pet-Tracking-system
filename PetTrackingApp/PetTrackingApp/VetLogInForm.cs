@@ -15,6 +15,7 @@ namespace PetTrackingApp
     {
         vet page = new vet();
         bool check = false;
+        string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
         public VetLogInForm()
         {
             InitializeComponent();
@@ -27,50 +28,26 @@ namespace PetTrackingApp
             {
                 try
                 {
-                    using (OleDbConnection con = new OleDbConnection())
+                 
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
+
+                    // Use parameterized query to check credentials
+                    int rowCount = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM vetRegTable WHERE Work_ID = ? AND Password = ?",
+                                                          new OleDbParameter("Work_ID", txtID.Text),
+                                                          new OleDbParameter("Password", txtPssword.Text));
+
+                    if (rowCount > 0)
                     {
-                        con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                        con.Open();
+                        // Update Logged_In table
+                        dbHelper.ExecuteNonQuery("UPDATE Logged_In SET ID_Number = ? WHERE count = 1", new OleDbParameter("ID_Number", txtID.Text));
 
-                        using (OleDbCommand command = new OleDbCommand())
-                        {
-                            command.Connection = con;
-
-                            // Use parameterized query to check credentials
-                            command.CommandText = "SELECT Work_ID, Password FROM vetRegTable WHERE Work_ID = ? AND Password = ?";
-                            command.Parameters.AddWithValue("?", txtID.Text);
-                            command.Parameters.AddWithValue("?", txtPssword.Text);
-
-                            using (OleDbDataReader reader = command.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    check = true;
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Invalid credentials!");
-                                }
-                            }
-
-                            con.Close();
-                            con.Open();
-
-                            if (check)
-                            {
-                                // Update Logged_In table
-                                command.CommandText = "UPDATE Logged_In SET ID_Number = ? WHERE count = 1";
-                                command.Parameters.Clear();
-                                command.Parameters.AddWithValue("?", txtID.Text);
-                                command.ExecuteNonQuery();
-
-                                this.Hide();
-                                vet page = new vet();
-                                page.Show();
-                            }
-
-                            con.Close();
-                        }
+                        this.Hide();
+                        vet page = new vet();
+                        page.Show();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid credentials!");
                     }
                 }
                 catch (Exception ex)
@@ -82,6 +59,7 @@ namespace PetTrackingApp
             {
                 MessageBox.Show("Fill in all the spaces!");
             }
+
 
 
         }
@@ -114,6 +92,11 @@ namespace PetTrackingApp
             VetSignUp page = new VetSignUp();
             page.Show();
             this.Hide();
+        }
+
+        private void LogInPanel_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

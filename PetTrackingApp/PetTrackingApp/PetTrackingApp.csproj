@@ -58,6 +58,7 @@
     <Compile Include="HomePage.Designer.cs">
       <DependentUpon>HomePage.cs</DependentUpon>
     </Compile>
+    <Compile Include="shared.cs" />
     <Compile Include="UserUpdate.cs">
       <SubType>Form</SubType>
     </Compile>

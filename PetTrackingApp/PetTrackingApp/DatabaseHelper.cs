@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.OleDb;
 
 public class DatabaseHelper
@@ -35,5 +36,20 @@ public class DatabaseHelper
             connection.Open();
             command.ExecuteNonQuery();
         }
+    }
+
+    internal DataTable ExecuteDataTable(string v, OleDbParameter oleDbParameter)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal DataTable ExecuteDataTable(string querySelectOwners, OleDbParameter[] selectOwnerParameters)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal DataTable ExecuteDataTable(string querySelectOwners)
+    {
+        throw new NotImplementedException();
     }
 }

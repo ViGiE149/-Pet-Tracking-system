@@ -66,54 +66,31 @@ namespace PetTrackingApp
                         {
                             int m = Convert.ToInt32(txtContact.Text);
 
-                            using (OleDbConnection con = new OleDbConnection())
+                            string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                            DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
+
+                            // Check if ID number is already registered
+                            int idCount = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM vetRegTable WHERE Work_ID = ?", new OleDbParameter("Work_ID", txtID.Text));
+
+                            if (idCount == 0)
                             {
-                                con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                                con.Open();
+                                // Insert new vet record
+                                dbHelper.ExecuteNonQuery("INSERT INTO vetRegTable (Work_ID, name_, Surname, Address, Contact_No, Gender, Password) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                    new OleDbParameter("Work_ID", txtID.Text),
+                                    new OleDbParameter("name_", txtName.Text),
+                                    new OleDbParameter("Surname", txtSurname.Text),
+                                    new OleDbParameter("Address", txtAddress.Text),
+                                    new OleDbParameter("Gender", gender),
+                                    new OleDbParameter("Contact_No", txtContact.Text),
+                                    new OleDbParameter("Password", txtPassword.Text));
 
-                                using (OleDbCommand command = new OleDbCommand())
-                                {
-                                    command.Connection = con;
-
-                                    // Check if ID number is already registered
-                                    command.CommandText = "SELECT * FROM vetRegTable WHERE Work_ID = ?";
-                                    command.Parameters.AddWithValue("?", txtID.Text);
-
-                                    using (OleDbDataReader reader = command.ExecuteReader())
-                                    {
-                                        if (reader.Read())
-                                        {
-                                            check = true;
-                                        }
-                                    }
-
-                                    con.Close();
-                                    con.Open();
-
-                                    if (!check)
-                                    {
-                                        // Insert new vet record
-                                        command.CommandText = "INSERT INTO vetRegTable (Work_ID, name_, Surname, Address, Contact_No, Gender, Password) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                                        command.Parameters.Clear();
-                                        command.Parameters.AddWithValue("?", txtID.Text);
-                                        command.Parameters.AddWithValue("?", txtName.Text);
-                                        command.Parameters.AddWithValue("?", txtSurname.Text);
-                                        command.Parameters.AddWithValue("?", txtAddress.Text);
-                                        command.Parameters.AddWithValue("?", gender);
-                                        command.Parameters.AddWithValue("?", txtContact.Text);
-                                        command.Parameters.AddWithValue("?", txtPassword.Text);
-
-                                        command.ExecuteNonQuery();
-
-                                        MessageBox.Show("Registered successfully");
-                                        this.Hide();
-                                        new VetLogInForm().Show();
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("This ID number is already registered");
-                                    }
-                                }
+                                MessageBox.Show("Registered successfully");
+                                this.Hide();
+                                new VetLogInForm().Show();
+                            }
+                            else
+                            {
+                                MessageBox.Show("This ID number is already registered");
                             }
                         }
                         catch (FormatException)
@@ -132,10 +109,9 @@ namespace PetTrackingApp
                 }
             }
 
-        
 
-    }
-       
+        }
+
 
         private void txtContact_TextChanged(object sender, EventArgs e)
         {

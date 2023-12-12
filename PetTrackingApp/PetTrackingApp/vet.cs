@@ -19,17 +19,10 @@ namespace PetTrackingApp
     public partial class vet : Form
     {
         bool see = false;
-        bool saw = false;
-        String x = "";
-        String idx = "";
-        String namex = "";
-        String surnamex = "";
-        String addressx = "";
-        String contactx = "";
-        String pictureValue = "";
-        string OWNER = "";
-        String black = "";
-        bool seex = false;
+        string x = "";
+        string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
+            
+
         public vet()
         {
             InitializeComponent();
@@ -40,57 +33,26 @@ namespace PetTrackingApp
             cc.Show();
             try
             {
+                // Use the DatabaseHelper class
+              
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
+                // Retrieve x from the database
+                string querySelectX = "SELECT ID_Number FROM Logged_In";
+               x = dbHelper.ExecuteScalar(querySelectX).ToString();
 
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
+                // Retrieve owner information from the database
+                string querySelectOwners = "SELECT ID_number, Name, Surname, Address, Contact_No, gender, [Password] FROM owners";
+                DataTable table = dbHelper.ExecuteDataTable(querySelectOwners);
 
-
-
-                command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-
-                    x = reader["ID_Number"].ToString();
-
-                }
-
-                con.Close();
-                con.Open();
-
-                command.CommandText = "SELECT ID_number, Name , Surname , Address, Contact_No,gender, [Password] FROM owners;";
-                command.ExecuteNonQuery();
-
-                OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                DataTable table = new DataTable();
-                adapter.Fill(table);
-
+                // Display the result in dataGridView1
                 dataGridView1.DataSource = table;
-
-                con.Close();
-
-
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("Error: " + ex.Message);
             }
-
-
-
-
-
-
-           
         }
-
-      
 
         private void button3_Click_1(object sender, EventArgs e)
         {
@@ -109,156 +71,37 @@ namespace PetTrackingApp
             {
 
 
-                int month = Convert.ToInt32(id.Substring(2, 2));
-                if (month < 13 && month > 0)
+                try
                 {
+                    // Use the DatabaseHelper class
+                 
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-
-                    int day = Convert.ToInt32(id.Substring(4, 2));
-                    if (day < 32 && day > 0)
+                    // Check if the person is registered
+                    string querySelectOwner = "SELECT * FROM owners WHERE id_number=?";
+                    OleDbParameter[] selectOwnerParameters =
                     {
-                        int genderr = Convert.ToInt32(id.Substring(6, 4));
-                        if (genderr >= 0000 && genderr <= 9999)
-                        {
-                            int citizenship = Convert.ToInt32(id.Substring(10, 1));
-                            if (citizenship >= 0 && citizenship <= 1)
-                            {
+        new OleDbParameter("id_number", txtId.Text)
+    };
 
-                                int randomA = Convert.ToInt32(id.Substring(11, 1));
-                                if (randomA < 10 && randomA >= 0)
-                                {
+                    DataTable ownerTable = dbHelper.ExecuteDataTable(querySelectOwner, selectOwnerParameters);
 
-
-
-                                    int[] array ={ Convert.ToInt32(id.Substring(0,1)), Convert.ToInt32(id.Substring(2,1)),  Convert.ToInt32(id.Substring(4,1)),
-              Convert.ToInt32(id.Substring(6,1)), Convert.ToInt32(id.Substring(8,1)), Convert.ToInt32(id.Substring(10,1))};
-
-
-                                    int[] array1 ={ Convert.ToInt32(id.Substring(1,1)), Convert.ToInt32(id.Substring(3,1)),  Convert.ToInt32(id.Substring(5,1)),
-                Convert.ToInt32(id.Substring(7,1)), Convert.ToInt32(id.Substring(9,1)), Convert.ToInt32(id.Substring(11,1))};
-
-
-                                    int sum = array[0] + array[1] + array[2] + array[3] + array[4] + array[5];
-                                    String allAsOne = array1[0] + "" + array1[1] + "" + array1[2] + "" + array1[3] + "" + array1[4] + "" + array1[5];
-
-                                    int doubleSUm = Convert.ToInt32(allAsOne) * 2;   /////to Int
-
-                                    String makeDoubleSumString = Convert.ToString((doubleSUm));  ////toString
-
-                                    int[] SumSD = new int[makeDoubleSumString.Length];
-                                    int sumEven = 0;
-
-                                    for (int i = 0; i < SumSD.Length; i++)
-                                    {
-                                        SumSD[i] = Convert.ToInt32(makeDoubleSumString.Substring(i, 1));
-                                        sumEven += SumSD[i];
-                                        if (makeDoubleSumString.Length == i + 1)
-                                        {
-
-                                           
-
-                                            int add = sum + sumEven;
-
-                                            int lastAdd = Convert.ToString(add).Length;
-                                            int IDcheckSumValue = 10 - Convert.ToInt32(Convert.ToString(add).Substring(lastAdd - 1));
-
-                                            int x = Convert.ToInt32(id.Substring(id.Length - 1));
-
-                                            if (x == IDcheckSumValue)
-                                            {
-                                                MessageBox.Show(" ID is valid");
-
-
-
-                                                    try
-                                                    {
-                                                        OleDbConnection con = new OleDbConnection();
-                                                        con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                                                        con.Open();
-
-                                                        OleDbCommand command = new OleDbCommand();
-                                                        command.Connection = con;
-
-                                                        command.CommandText = "SELECT * FROM owners WHERE id_number ='" + txtId.Text + "';";
-
-
-                                                        OleDbDataReader reader = command.ExecuteReader();
-
-                                                        if (reader.Read())
-                                                        {
-
-
-                                                          Random rand = new Random();
-
-                                                          int temp = rand.Next(10000, 100000);
-
-                                                           txtPet.Text = "#" + Convert.ToString(temp);
- 
-
-
-                                                    }
-                                                    else
-                                                        {
-                                                          MessageBox.Show("This person is not registered on the system!");
-
-
-                                                        }
-
-                                                        con.Close();
-                                                        con.Open();
-                                                    
-                                                    }
-                                                    catch (Exception EX)
-                                                    {
-                                                        MessageBox.Show("An error occoured" + EX);
-
-                                                    }
-                                              
-
-
-                                            }
-                                            else
-                                            {
-                                                MessageBox.Show(" ID is invalid!!!");
-                                            }
-
-                                        }
-                                    }
-
-                                }
-                                else
-                                {
-                                    MessageBox.Show(randomA + " ID is invalid!!!");
-                                }
-
-                            }
-                            else
-                            {
-                                MessageBox.Show(citizenship + " ID is invalid!!!");
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show(genderr + "  " + "ID is invalid!!!");
-                        }
-
+                    if (ownerTable.Rows.Count > 0)
+                    {
+                        // Person is registered
+                        Random rand = new Random();
+                        int temp = rand.Next(10000, 100000);
+                        txtPet.Text = "#" + Convert.ToString(temp);
                     }
                     else
                     {
-                        MessageBox.Show(day + "  " + "ID is invalid!!!");
+                        MessageBox.Show("This person is not registered on the system!");
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    MessageBox.Show(month + "  " + "ID is invalid!!!");
+                    MessageBox.Show("An error occurred: " + ex.Message);
                 }
-
-
-
-            }
-            else
-            {
-                MessageBox.Show("ID number must be 13 digits!");
 
             }
 
@@ -276,50 +119,35 @@ namespace PetTrackingApp
             {
                 try
                 {
-                    OleDbConnection con = new OleDbConnection();
-                    con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                    con.Open();
+                    // Use the DatabaseHelper class
+                  
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                    OleDbCommand command = new OleDbCommand();
-                    command.Connection = con;
-                   
-
-
-                  //  MessageBox.Show("id as been assign they can now fully register there pet");
-                   command.CommandText = "SELECT * FROM Assigned_Pet_IDs where petID ='" + txtPet.Text + "' and OwerID ='" + txtId.Text + "';";
-
-
-                    OleDbDataReader reader = command.ExecuteReader();
-                      
-                    if (reader.Read())
+                    // Check if the pet is already assigned
+                    string queryCheckAssignment = "SELECT * FROM Assigned_Pet_IDs WHERE petID=? AND OwerID=?";
+                    OleDbParameter[] checkAssignmentParameters =
                     {
+            new OleDbParameter("petID", txtPet.Text),
+            new OleDbParameter("OwerID", txtId.Text)
+        };
 
+                    DataTable assignmentTable = dbHelper.ExecuteDataTable(queryCheckAssignment, checkAssignmentParameters);
 
-                        MessageBox.Show("This pet has already been assigned to you !");
-
-
+                    if (assignmentTable.Rows.Count > 0)
+                    {
+                        MessageBox.Show("This pet has already been assigned to you!");
                     }
                     else
-                        {
-                        con.Close();
-                        con.Open();
+                    {
+                        // Assign the pet
+                        dbHelper.ExecuteNonQuery("INSERT INTO Assigned_Pet_IDs (petID, OwerID) VALUES (?, ?)", checkAssignmentParameters);
 
                         MessageBox.Show("Pet ID has been assigned, they can now fully register the pet");
-                        command.CommandText = "SELECT * FROM Assigned_Pet_IDs where petID ='" + txtPet.Text + "' and OwerID='" + txtId.Text + "';";
-                        command.ExecuteNonQuery();
-
-                        command.CommandText = "INSERT INTO `Assigned_Pet_IDs` (`petID`, `OwerID`) VALUES ('" + txtPet.Text + "','" + txtId.Text + "')";
-                        command.ExecuteNonQuery();
                     }
-
-                    con.Close();
-                 
-
                 }
-                catch (Exception EX)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("An error occoured" + EX);
-
+                    MessageBox.Show("An error occurred: " + ex.Message);
                 }
             }
             else
@@ -337,101 +165,82 @@ namespace PetTrackingApp
         {
             if (!(textBox1.Text == ""))
             {
-               
                 try
                 {
-                    OleDbConnection con = new OleDbConnection();
-                    con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                    con.Open();
-
-                    OleDbCommand command = new OleDbCommand();
-                    command.Connection = con;
-
-
-
-
-                    //  MessageBox.Show("id as been assign they can now fully register there pet");
-                    command.CommandText = "SELECT  * FROM Pets WHERE Pet_ID = '"+textBox1.Text+"' ";
+                    // Use the DatabaseHelper class
                   
-                    OleDbDataReader reader = command.ExecuteReader();
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                    if (reader.Read())
+                    // Get owner information based on the pet ID
+                    string querySelectOwner = "SELECT Owner_ID FROM Pets WHERE Pet_ID=?";
+                    OleDbParameter[] selectOwnerParameters =
                     {
+            new OleDbParameter("Pet_ID", textBox1.Text)
+        };
 
-                        OWNER = reader["Owner_ID"].ToString();
-                  
-                    }
-                    
-                    con.Close();
-                    con.Open();
+                    string OWNER = dbHelper.ExecuteScalar(querySelectOwner, selectOwnerParameters).ToString();
 
-                    //  MessageBox.Show("id as been assign they can now fully register there pet");
-                    command.CommandText = "SELECT ID_number, Name, Surname, Gender, Address, Contact_No FROM owners WHERE ID_number = '" + OWNER+" '";
-
-
-                    reader = command.ExecuteReader();
-
-                    while(reader.Read())
+                    // Display owner information
+                    string querySelectOwnerDetails = "SELECT ID_number, Name, Surname, Gender, Address, Contact_No FROM owners WHERE ID_number=?";
+                    OleDbParameter[] selectOwnerDetailsParameters =
                     {
+            new OleDbParameter("ID_number", OWNER)
+        };
 
-                        label12.Text = reader["ID_number"].ToString();
-                        label10.Text = reader["Name"].ToString();
-                        label11.Text = reader["Surname"].ToString();
-                        label13.Text = reader["Gender"].ToString();
-                        label9.Text = reader["Address"].ToString();
-                        label8.Text = reader["Contact_No"].ToString();
+                    DataTable ownerDetailsTable = dbHelper.ExecuteDataTable(querySelectOwnerDetails, selectOwnerDetailsParameters);
 
-
-
-                    }
-
-                    con.Close();
-                    con.Open();
-
-                    command.CommandText = "SELECT status FROM Pets WHERE pet_ID ='"+textBox1.Text+ "' ";
-
-                    reader = command.ExecuteReader();
-
-                    if (reader.Read())
+                    if (ownerDetailsTable.Rows.Count > 0)
                     {
+                        DataRow row = ownerDetailsTable.Rows[0];
+                        label12.Text = row["ID_number"].ToString();
+                        label10.Text = row["Name"].ToString();
+                        label11.Text = row["Surname"].ToString();
+                        label13.Text = row["Gender"].ToString();
+                        label9.Text = row["Address"].ToString();
+                        label8.Text = row["Contact_No"].ToString();
+                    }
 
-                        pictureValue = reader["status"].ToString();
-                        
+                    // Get pet status information
+                    string querySelectPetStatus = "SELECT status FROM Pets WHERE Pet_ID=?";
+                    OleDbParameter[] selectPetStatusParameters =
+                    {
+            new OleDbParameter("Pet_ID", textBox1.Text)
+        };
 
-                    }
-                   ////////
-                    if (pictureValue.Equals("good"))
-                    {
-                        pictureBox1.Image= Properties.Resources.tick;
-                        label14.Text = "Good";
-                        panel1.BackColor = Color.FromArgb(120, Color.Green);
-                    }
-                    else if(pictureValue.Equals("missing"))
-                    {
-                        label14.Text = "Missing";
-                        pictureBox1.Image = Properties.Resources.missing;
-                        panel1.BackColor = Color.FromArgb(120, Color.Red);
-                    }
-                    else if (pictureValue.Equals("stolen"))
-                    {
-                        label14.Text = "Stolen";
-                        pictureBox1.Image = Properties.Resources.stolen;
-                        panel1.BackColor = Color.FromArgb(120, Color.Red);
-                    }
-                    else if (pictureValue.Equals("recovered"))
-                    {
-                        label14.Text = "Recovered";
-                        pictureBox1.Image = Properties.Resources.recovered;
-                        panel1.BackColor = Color.FromArgb(120, Color.Green);
-                    }
-                    con.Close();
-                    
+                    string pictureValue = dbHelper.ExecuteScalar(querySelectPetStatus, selectPetStatusParameters).ToString();
 
+                    // Display pet status
+                    if (pictureValue != null)
+                    {
+                        if (pictureValue.Equals("good"))
+                        {
+                            pictureBox1.Image = Properties.Resources.tick;
+                            label14.Text = "Good";
+                            panel1.BackColor = Color.FromArgb(120, Color.Green);
+                        }
+                        else if (pictureValue.Equals("missing"))
+                        {
+                            label14.Text = "Missing";
+                            pictureBox1.Image = Properties.Resources.missing;
+                            panel1.BackColor = Color.FromArgb(120, Color.Red);
+                        }
+                        else if (pictureValue.Equals("stolen"))
+                        {
+                            label14.Text = "Stolen";
+                            pictureBox1.Image = Properties.Resources.stolen;
+                            panel1.BackColor = Color.FromArgb(120, Color.Red);
+                        }
+                        else if (pictureValue.Equals("recovered"))
+                        {
+                            label14.Text = "Recovered";
+                            pictureBox1.Image = Properties.Resources.recovered;
+                            panel1.BackColor = Color.FromArgb(120, Color.Green);
+                        }
+                    }
                 }
-                catch (Exception EX)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("An error occoured" + EX);
-
+                    MessageBox.Show("An error occurred: " + ex.Message);
                 }
             }
             else
@@ -500,59 +309,31 @@ namespace PetTrackingApp
         {
             try
             {
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
+                // Check if ID_Number exists in owners table
+                int idNumberCount = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE ID_Number = ?", new OleDbParameter("ID_Number", textBox2.Text));
 
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-                command.CommandText = "SELECT ID_Number From owners WHERE ID_Number = '"+textBox2.Text+"';";
-                OleDbDataReader reader = command.ExecuteReader();
-
-               while (reader.Read())
+                if (idNumberCount > 0)
                 {
+                    // ID_Number exists, fetch owner details
+                    OleDbDataAdapter adapter = new OleDbDataAdapter("SELECT ID_number, Name, Surname, Address, Contact_No, gender, [Password] FROM owners WHERE ID_number = ?", dbHelper.GetConnection());
+                    adapter.SelectCommand.Parameters.AddWithValue("ID_number", textBox2.Text);
 
-                    see = true;
-                   
-                }
-
-                con.Close();
-                con.Open();
-
-               
-
-
-
-
-                if (see==true)
-                {
-
-
-                    command.CommandText = "SELECT ID_number, Name , Surname , Address, Contact_No,gender, [Password] FROM owners where Id_number ='" + x + "';";
-                    command.ExecuteNonQuery();
-
-                    OleDbDataAdapter adapter = new OleDbDataAdapter(command);
                     DataTable table = new DataTable();
                     adapter.Fill(table);
 
                     dataGridView1.DataSource = table;
-
-                    con.Close();
                 }
                 else
                 {
                     MessageBox.Show("THIS ID IS NOT REGISTERED ON THE SYSTEM !");
                 }
-
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
 
 
@@ -568,67 +349,33 @@ namespace PetTrackingApp
 
             try
             {
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-
-
-
-                command.CommandText = "SELECT ID_Number From owners WHERE ID_Number = '" + textBox2.Text + "';";
-                OleDbDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
+                using (OleDbConnection con = dbHelper.GetConnection())
                 {
+                    con.Open();
 
-                    saw = true;
+                    // Check if ID_Number exists in owners table
+                    int ownerIdCount = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE ID_Number = ?", new OleDbParameter("ID_Number", textBox2.Text));
 
+                    if (ownerIdCount > 0)
+                    {
+                        // ID_Number exists, fetch data from PetS table
+                        DataTable table = dbHelper.ExecuteDataTable("SELECT * FROM PetS WHERE Owner_ID = ?", new OleDbParameter("Owner_ID", textBox2.Text));
+
+                        // Display data in dataGridView1
+                        dataGridView1.DataSource = table;
+                    }
+                    else
+                    {
+                        MessageBox.Show("THIS ID IS NOT REGISTERED ON THE SYSTEM !");
+                    }
                 }
-
-                con.Close();
-                con.Open();
-
-
-
-
-
-
-                if (saw == true)
-                {
-
-
-                    command.CommandText = "select * FROM PetS where Owner_ID ='" + textBox2.Text + "';";
-                    command.ExecuteNonQuery();
-
-                    OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                    DataTable table = new DataTable();
-                    adapter.Fill(table);
-
-                    dataGridView1.DataSource = table;
-
-                    con.Close();
-                }
-                else
-                {
-                    MessageBox.Show("THIS ID IS NOT REGISTERED ON THE SYSTEM !");
-                }
-
-
-                con.Close();
-
-
-
-              
-
-
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("error " + ex.Message);
             }
 
         }
@@ -640,46 +387,30 @@ namespace PetTrackingApp
 
         private void button6_Click(object sender, EventArgs e)
         {
-
             try
             {
-                OleDbConnection con = new OleDbConnection();
-                con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-                con.Open();
-
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
-
-                command.CommandText = "SELECT * from Pets WHERE Pet_ID = '" + textBox1.Text + "';";
-
-
-                OleDbDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-
-                    seex = true;
-
-                }
                
-                con.Close();
-                con.Open();
-                if (seex)
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
+
+                // Check if Pet_ID exists in Pets table
+                int petIdCount = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM Pets WHERE Pet_ID = ?", new OleDbParameter("Pet_ID", textBox1.Text));
+
+                if (petIdCount > 0)
                 {
-
-                    command.CommandText = "UPDATE Pets SET statusByVet = '"+textBox3.Text+ "' where Pet_ID = '" + textBox1.Text + "';";
-                    command.ExecuteNonQuery();
-
-                    MessageBox.Show("status updated!");
-
+                    // Pet_ID exists, update statusByVet
+                    dbHelper.ExecuteNonQuery("UPDATE Pets SET statusByVet = ? WHERE Pet_ID = ?", new OleDbParameter("statusByVet", textBox3.Text), new OleDbParameter("Pet_ID", textBox1.Text));
+                    MessageBox.Show("Status updated!");
                 }
-                con.Close();
+                else
+                {
+                    MessageBox.Show("Pet ID not found!");
+                }
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("an error occoured" + EX);
-
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
+
 
         }
     }

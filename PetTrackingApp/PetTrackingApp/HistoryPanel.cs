@@ -13,54 +13,32 @@ namespace PetTrackingApp
 {
     public partial class HistoryPanel : Form
     {
-        String owner = "";
+      
         public HistoryPanel()
         {
             InitializeComponent();
 
             try
             {
-                using (OleDbConnection con = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;"))
-                {
-                    con.Open();
+                string owner;
 
-                    using (OleDbCommand command = new OleDbCommand())
-                    {
-                        command.Connection = con;
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                        // Get ID_Number from Logged_In table
-                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                owner = reader["ID_Number"].ToString();
-                            }
-                        }
+                // Get ID_Number from Logged_In table
+                owner = dbHelper.ExecuteScalar("SELECT ID_Number FROM Logged_In;").ToString();
 
-                        con.Close();
-                        con.Open();
+                // Select data from Pet_Transfer table for the current owner
+                DataTable dataTable = dbHelper.ExecuteDataTable("SELECT * FROM Pet_Transfer WHERE current_ownerID = @owner",
+                    new OleDbParameter("@owner", owner));
 
-                        // Select data from Pet_Transfer table for the current owner
-                        command.CommandText = "SELECT * FROM Pet_Transfer WHERE current_ownerID = '" + owner + "';";
-                        command.ExecuteNonQuery();
-
-                        using (OleDbDataAdapter adapter = new OleDbDataAdapter(command))
-                        {
-                            DataTable table = new DataTable();
-                            adapter.Fill(table);
-
-                            dataGridView1.DataSource = table;
-                        }
-
-                        con.Close();
-                    }
-                }
+                dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+
 
         }
 

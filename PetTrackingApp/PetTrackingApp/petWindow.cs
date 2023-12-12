@@ -14,7 +14,7 @@ namespace PetTrackingApp
     public partial class petWindow : Form
     {
         string gender = "";
-        String ower = "";
+  
         String owner = "";
         String name = "";
 
@@ -36,65 +36,43 @@ namespace PetTrackingApp
         {
             try
             {
+               
                 if (!(string.IsNullOrEmpty(txtPetName.Text) || string.IsNullOrEmpty(txtPetID.Text) || string.IsNullOrEmpty(txtPetColor.Text) || string.IsNullOrEmpty(txtTypeofPet.Text) || (malePet.Checked == false && femalePet.Checked == false)))
                 {
-                    using (OleDbConnection con = new OleDbConnection())
-                    {
-                        con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                        con.Open();
+                    string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                        using (OleDbCommand command = new OleDbCommand())
-                        {
-                            command.Connection = con;
+                    // Get owner ID from Logged_In table
+                    owner = dbHelper.ExecuteScalar("SELECT ID_Number FROM Logged_In;").ToString();
 
-                            // Get owner ID from Logged_In table
-                            command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                            using (OleDbDataReader reader = command.ExecuteReader())
-                            {
-                                if (reader.Read())
-                                {
-                                    owner = reader["ID_Number"].ToString();
-                                }
-                            }
+                    // Insert pet into Pets table
+                    dbHelper.ExecuteNonQuery("INSERT INTO Pets (Pet_ID, Owner_ID, Name, Pet_Type, Breed, Colour, Gender, Date_Of_Birth, status)" +
+                                            "VALUES (@Pet_ID, @Owner_ID, @Name, @Pet_Type, @Breed, @Colour, @Gender, @Date_Of_Birth, 'good');",
+                                            new OleDbParameter("@Pet_ID", txtPetID.Text),
+                                            new OleDbParameter("@Owner_ID", owner),
+                                            new OleDbParameter("@Name", txtPetName.Text),
+                                            new OleDbParameter("@Pet_Type", txtTypeofPet.Text),
+                                            new OleDbParameter("@Breed", txtPetBreed.Text),
+                                            new OleDbParameter("@Colour", txtPetColor.Text),
+                                            new OleDbParameter("@Gender", gender),
+                                            new OleDbParameter("@Date_Of_Birth", txtPetDOB.Value.ToString()));
 
-                            con.Close();
-                            con.Open();
+                    // Remove assigned pet ID from Assigned_Pet_IDs table
+                    dbHelper.ExecuteNonQuery("DELETE FROM Assigned_Pet_IDs WHERE petID = @Pet_ID AND OwerID = @Owner_ID",
+                                            new OleDbParameter("@Pet_ID", txtPetID.Text),
+                                            new OleDbParameter("@Owner_ID", owner));
 
-                            // Insert pet into Pets table
-                            command.CommandText = "INSERT INTO Pets (Pet_ID, Owner_ID, Name, Pet_Type, Breed, Colour, Gender, Date_Of_Birth, status)" +
-                                                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'good');";
-                            command.Parameters.AddWithValue("?", txtPetID.Text);
-                            command.Parameters.AddWithValue("?", owner);
-                            command.Parameters.AddWithValue("?", txtPetName.Text);
-                            command.Parameters.AddWithValue("?", txtTypeofPet.Text);
-                            command.Parameters.AddWithValue("?", txtPetBreed.Text);
-                            command.Parameters.AddWithValue("?", txtPetColor.Text);
-                            command.Parameters.AddWithValue("?", gender);
-                            command.Parameters.AddWithValue("?", txtPetDOB.Value.ToString());
+                    MessageBox.Show("Pet registered successfully!");
 
-                            command.ExecuteNonQuery();
-
-                            // Remove assigned pet ID from Assigned_Pet_IDs table
-                            command.CommandText = "DELETE FROM Assigned_Pet_IDs WHERE petID = ? AND OwerID = ?";
-                            command.Parameters.Clear();
-                            command.Parameters.AddWithValue("?", txtPetID.Text);
-                            command.Parameters.AddWithValue("?", owner);
-
-                            command.ExecuteNonQuery();
-
-                            con.Close();
-                            MessageBox.Show("Pet registered successfully!");
-                            // Clear form fields
-                            txtPetName.Text = "";
-                            txtTypeofPet.Text = "";
-                            txtPetColor.Text = "";
-                            txtPetBreed.Text = "";
-                            gender = "";
-                            txtPetID.Text = "";
-                            femalePet.Checked = false;
-                            malePet.Checked = false;
-                        }
-                    }
+                    // Clear form fields
+                    txtPetName.Text = "";
+                    txtTypeofPet.Text = "";
+                    txtPetColor.Text = "";
+                    txtPetBreed.Text = "";
+                    gender = "";
+                    txtPetID.Text = "";
+                    femalePet.Checked = false;
+                    malePet.Checked = false;
                 }
                 else
                 {
@@ -114,50 +92,27 @@ namespace PetTrackingApp
 
             try
             {
-                using (OleDbConnection con = new OleDbConnection())
-                {
-                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                    con.Open();
+               
 
-                    using (OleDbCommand command = new OleDbCommand())
-                    {
-                        command.Connection = con;
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                        // Get owner ID from Logged_In table
-                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                owner = reader["ID_Number"].ToString();
-                            }
-                        }
+                // Get owner ID from Logged_In table
+                owner = dbHelper.ExecuteScalar("SELECT ID_Number FROM Logged_In;").ToString();
 
-                        con.Close();
-                        con.Open();
+                // Get petID from Assigned_Pet_IDs table based on owner ID
+                name = dbHelper.ExecuteScalar("SELECT TOP 1 petID FROM Assigned_Pet_IDs WHERE OwerID = @Owner_ID;",
+                                              new OleDbParameter("@Owner_ID", owner)).ToString();
 
-                        // Get petID from Assigned_Pet_IDs table based on owner ID
-                        command.CommandText = "SELECT TOP 1 petID FROM Assigned_Pet_IDs WHERE OwerID = ?;";
-                        command.Parameters.AddWithValue("?", owner);
+                txtPetID.Text = name;
 
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                name = reader["petID"].ToString();
-                                MessageBox.Show(name);
-                            }
-                        }
-
-                        txtPetID.Text = name;
-                        con.Close();
-                    }
-                }
+                MessageBox.Show(name);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+
 
         }
 
@@ -179,6 +134,11 @@ namespace PetTrackingApp
             txtTypeofPet.Text = "";
             txtPetID.Text = "";
             txtPetName.Text = "";
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

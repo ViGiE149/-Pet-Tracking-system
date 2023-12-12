@@ -159,44 +159,19 @@ namespace PetTrackingApp
         {
             try
             {
-                using (OleDbConnection con = new OleDbConnection())
-                {
-                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                    con.Open();
+           
 
-                    using (OleDbCommand command = new OleDbCommand())
-                    {
-                        command.Connection = con;
+                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                        // Get owner ID from Logged_In table
-                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                owner = reader["ID_Number"].ToString();
-                            }
-                        }
+                // Get owner ID from Logged_In table
+                owner = dbHelper.ExecuteScalar("SELECT ID_Number FROM Logged_In;").ToString();
 
-                        con.Close();
-                        con.Open();
+                // Get owner's name from owners table
+                name = dbHelper.ExecuteScalar("SELECT Name FROM owners WHERE ID_number = @owner", new OleDbParameter("@owner", owner)).ToString();
 
-                        // Get owner's name from owners table
-                        command.CommandText = "SELECT Name FROM owners WHERE ID_number = ?";
-                        command.Parameters.AddWithValue("?", owner);
-
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                name = reader["Name"].ToString();
-                            }
-                        }
-
-                        txtUsername.Text = name;
-                        txtId.Text = owner;
-                    }
-                }
+                txtUsername.Text = name;
+                txtId.Text = owner;
 
                 timer1.Stop();
             }
@@ -204,6 +179,7 @@ namespace PetTrackingApp
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+
 
         }
 

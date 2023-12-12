@@ -13,57 +13,63 @@ namespace PetTrackingApp
 {
     public partial class UpdatePanel : Form
     {
-        String owner="";
+        string owner="";
+        string  connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
         public UpdatePanel()
         {
             InitializeComponent();
 
             try
             {
-                using (OleDbConnection con = new OleDbConnection())
+                string owner = GetOwnerID();
+                DataTable petsTable = GetPetsForOwner(owner);
+
+                dataGridView1.DataSource = petsTable;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message);
+            }
+        }
+
+
+        private string GetOwnerID()
+        {
+       
+            try
+            {
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
+
+
+                    owner = dbHelper.ExecuteScalar("SELECT ID_Number FROM Logged_In;").ToString();
+            
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error retrieving owner ID: " + ex.Message);
+            }
+            return owner;
+        }
+
+        private DataTable GetPetsForOwner(string owner)
+        {
+            DataTable petsTable = new DataTable();
+            try
+            {
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
                 {
-                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                    con.Open();
-
-                    using (OleDbCommand command = new OleDbCommand())
-                    {
-                        command.Connection = con;
-
-                        // Get owner ID from Logged_In table
-                        command.CommandText = "SELECT ID_Number FROM Logged_In;";
-                        using (OleDbDataReader reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                owner = reader["ID_Number"].ToString();
-                            }
-                        }
-
-                        con.Close();
-                        con.Open();
-
-                        // Retrieve pets for the specific owner using parameterized query
-                        command.CommandText = "SELECT * FROM Pets WHERE Owner_ID = ?";
-                        command.Parameters.AddWithValue("?", owner);
-
-                        command.ExecuteNonQuery();
-
-                        OleDbDataAdapter adapter = new OleDbDataAdapter(command);
-                        DataTable table = new DataTable();
-                        adapter.Fill(table);
-
-                        dataGridView1.DataSource = table;
-
-                        con.Close();
-                    }
+                    string query = "SELECT * FROM Pets WHERE Owner_ID = ?";
+                    OleDbParameter parameter = new OleDbParameter("?", owner);
+                    petsTable = dbHelper.ExecuteDataTable(query, parameter);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show("Error retrieving pets: " + ex.Message);
             }
-
+            return petsTable;
         }
+
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -78,27 +84,20 @@ namespace PetTrackingApp
         {
             try
             {
-                using (OleDbConnection con = new OleDbConnection())
+                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
                 {
-                    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                    con.Open();
-
-                    using (OleDbCommand command = new OleDbCommand())
+                    // Use parameterized query to update Pets table
+                    string query = "UPDATE Pets SET Name = ?, Colour = ? WHERE Pet_ID = ?";
+                    OleDbParameter[] parameters = new OleDbParameter[]
                     {
-                        command.Connection = con;
+            new OleDbParameter("?", txtPetName.Text),
+            new OleDbParameter("?", txtPetColor.Text),
+            new OleDbParameter("?", txtPetID.Text)
+                    };
 
-                        // Use parameterized query to update Pets table
-                        command.CommandText = "UPDATE Pets SET Name = ?, Colour = ? WHERE Pet_ID = ?";
-                        command.Parameters.AddWithValue("?", txtPetName.Text);
-                        command.Parameters.AddWithValue("?", txtPetColor.Text);
-                        command.Parameters.AddWithValue("?", txtPetID.Text);
+                    dbHelper.ExecuteNonQuery(query, parameters);
 
-                        command.ExecuteNonQuery();
-
-                        con.Close();
-
-                        MessageBox.Show("Updated successfully");
-                    }
+                    MessageBox.Show("Updated successfully");
                 }
             }
             catch (Exception ex)
@@ -111,31 +110,24 @@ namespace PetTrackingApp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OleDbConnection con = new OleDbConnection();
-            con.ConnectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = Database.accdb;  Persist Security Info = False; ";
-            con.Open();
-
             try
             {
-                
+             
 
-                OleDbCommand command = new OleDbCommand();
-                command.Connection = con;
+                    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                command.CommandText = "DELETE * FROM PetS WHERE Pet_ID = '"+txtPetID.Text+"'; ";
-                command.ExecuteNonQuery();
+                    // DELETE * FROM PetS WHERE Pet_ID = @PetID
+                    dbHelper.ExecuteNonQuery("DELETE FROM PetS WHERE Pet_ID = @PetID",
+                                            new OleDbParameter("@PetID", txtPetID.Text));
 
-                con.Close();
-
-                MessageBox.Show("Deleted successfully");
- 
+                    MessageBox.Show("Deleted successfully");
+           
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
-                MessageBox.Show("error " + EX);
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
 
-            con.Close();
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -151,6 +143,11 @@ namespace PetTrackingApp
             }
 
 
+
+        }
+
+        private void UpdatePanel_Load(object sender, EventArgs e)
+        {
 
         }
     }

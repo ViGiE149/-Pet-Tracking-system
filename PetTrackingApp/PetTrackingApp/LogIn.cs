@@ -6,7 +6,7 @@ namespace PetTrackingApp
 {
     public partial class LogIn : Form
     {
-        bool check = false;
+
         public LogIn()
         {
             InitializeComponent();
@@ -17,33 +17,35 @@ namespace PetTrackingApp
         private void LoginBtn_Click(object sender, EventArgs e)
         {
 
-            try
-            {
-                string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
-                DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
+           try
+{
+    string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=Database.accdb;Persist Security Info=False;";
+    DatabaseHelper dbHelper = new DatabaseHelper(connectionString);
 
-                int count = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE id_number = ? AND password = ?",
-                                                   new OleDbParameter("?", txtID.Text),
-                                                   new OleDbParameter("?", txtPassword.Text));
+    // Hash the entered password for comparison
+    string hashedPassword = shared.HashPassword(txtPassword.Text);
 
-                if (count > 0)
-                {
-                    // Update Logged_In table
-                    dbHelper.ExecuteNonQuery("UPDATE Logged_In SET ID_Number = ? WHERE count = 1", new OleDbParameter("?", txtID.Text));
+    int count = dbHelper.ExecuteScalar("SELECT COUNT(*) FROM owners WHERE id_number = @id_number AND password = @password",
+                                       new OleDbParameter("@id_number", txtID.Text),
+                                       new OleDbParameter("@password", hashedPassword));
 
-                    this.Hide();
-                    new OwnerDesk().Show();
-                }
-                else
-                {
-                    MessageBox.Show("Invalid credentials!");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("An error occurred: " + ex.Message);
-            }
+    if (count > 0)
+    {
+        // Update Logged_In table
+        dbHelper.ExecuteNonQuery("UPDATE Logged_In SET ID_Number = @id_number WHERE count = 1", new OleDbParameter("@id_number", txtID.Text));
 
+        this.Hide();
+        new OwnerDesk().Show();
+    }
+    else
+    {
+        MessageBox.Show("Invalid credentials!");
+    }
+}
+catch (Exception ex)
+{
+    MessageBox.Show("An error occurred: " + ex.Message);
+}
 
 
         }

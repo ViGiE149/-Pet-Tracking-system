@@ -73,6 +73,7 @@ namespace PetTrackingApp
             this.LogInPanel.Name = "LogInPanel";
             this.LogInPanel.Size = new System.Drawing.Size(838, 374);
             this.LogInPanel.TabIndex = 4;
+            this.LogInPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.LogInPanel_Paint);
             // 
             // button1
             // 
